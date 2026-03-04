@@ -7,132 +7,134 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --yt-red: #ff0000; --bg: #0f0f0f; --text: #fff; --grey: #aaa; }
-        body { background: var(--bg); color: var(--text); font-family: Roboto, Arial; margin: 0; padding-bottom: 70px; }
+        :root { --yt-red: #ff0000; --bg: #0f0f0f; --surface: #1e1e1e; --text: #fff; --text-dim: #aaa; }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: "Roboto", sans-serif; margin: 0; padding-bottom: 70px; }
         
-        header { position: sticky; top: 0; background: var(--bg); display: flex; justify-content: space-between; padding: 10px 15px; align-items: center; z-index: 10; }
-        .logo { display: flex; align-items: center; gap: 5px; font-weight: bold; font-size: 19px; }
+        header { position: sticky; top: 0; background: var(--bg); display: flex; justify-content: space-between; padding: 12px 16px; align-items: center; z-index: 100; }
+        .logo { display: flex; align-items: center; gap: 4px; font-weight: bold; font-size: 19px; letter-spacing: -1px; }
         
-        .video-card { margin-bottom: 20px; }
-        .thumb { width: 100%; aspect-ratio: 16/9; background: #222; position: relative; display: flex; align-items: center; justify-content: center; }
-        .thumb i { font-size: 40px; color: rgba(255,255,255,0.1); }
+        .video-card { width: 100%; margin-bottom: 12px; }
+        .thumbnail { width: 100%; aspect-ratio: 16/9; background: #222; position: relative; display: flex; align-items: center; justify-content: center; }
+        .thumbnail i { font-size: 48px; color: rgba(255,255,255,0.1); }
+        .duration { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.8); padding: 2px 4px; border-radius: 4px; font-size: 12px; font-weight: 500; }
 
-        .details { display: flex; padding: 12px; gap: 12px; position: relative; }
-        .avatar { width: 36px; height: 36px; background: #444; border-radius: 50%; }
+        .details { display: flex; padding: 12px; gap: 12px; }
+        .avatar { width: 36px; height: 36px; background: linear-gradient(45deg, #333, #555); border-radius: 50%; flex-shrink: 0; }
         .meta { flex: 1; }
-        .v-title { font-size: 15px; font-weight: 500; margin-bottom: 4px; display: block; }
-        .v-stats { font-size: 12px; color: var(--grey); }
+        .v-title { font-size: 16px; font-weight: 500; line-height: 1.4; margin-bottom: 4px; display: block; }
+        .v-info { font-size: 12px; color: var(--text-dim); }
 
-        /* Кнопка подписки */
-        .sub-btn {
-            background: white;
-            color: black;
-            border-radius: 18px;
-            padding: 6px 15px;
-            font-size: 12px;
-            font-weight: bold;
-            border: none;
-            height: fit-content;
-        }
+        .sub-btn { background: #fff; color: #000; border-radius: 18px; padding: 6px 14px; font-size: 12px; font-weight: 500; border: none; height: 32px; }
+        
+        .actions { display: flex; gap: 20px; padding: 0 16px 12px 64px; font-size: 13px; color: var(--text-dim); }
+        .action-item { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .action-item i:active { color: var(--yt-red); transform: scale(1.3); }
 
-        /* Лайки и управление */
-        .actions {
-            display: flex;
-            gap: 15px;
-            padding: 0 12px 10px 60px;
-            font-size: 13px;
-            color: var(--grey);
-        }
-        .action-item { display: flex; align-items: center; gap: 5px; }
-        .action-item i:active { color: var(--yt-red); transform: scale(1.2); transition: 0.1s; }
+        nav { position: fixed; bottom: 0; width: 100%; background: var(--bg); display: flex; justify-content: space-around; padding: 8px 0; border-top: 1px solid #222; z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--text-dim); gap: 4px; }
+        .nav-item.active { color: #fff; }
+        .nav-item i { font-size: 20px; }
 
-        nav { position: fixed; bottom: 0; width: 100%; background: var(--bg); display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #222; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--grey); }
+        .error-msg { text-align: center; padding: 40px 20px; color: var(--text-dim); }
+        .error-msg code { display: block; margin-top: 10px; font-size: 10px; color: #555; }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo"><i class="fa-brands fa-youtube" style="color:red"></i> RuferTube</div>
-        <div style="display:flex; gap:15px"><i class="fa fa-search"></i><i class="fa fa-user-circle"></i></div>
+        <div class="logo"><i class="fa-brands fa-youtube" style="color:var(--yt-red)"></i> RuferTube</div>
+        <div style="display:flex; gap:20px"><i class="fa-solid fa-rss"></i><i class="fa-regular fa-bell"></i><i class="fa-solid fa-magnifying-glass"></i></div>
     </header>
 
-    <div id="mainFeed"></div>
+    <div id="mainFeed">
+        <div class="error-msg">Загрузка ленты...</div>
+    </div>
 
     <nav>
-        <div class="nav-item"><i class="fa fa-house"></i><span>Главная</span></div>
-        <div class="nav-item"><i class="fa fa-bolt"></i><span>Shorts</span></div>
-        <div class="nav-item" style="font-size:24px"><i class="fa-regular fa-circle-plus"></i></div>
-        <div class="nav-item"><i class="fa fa-clapperboard"></i><span>Подписки</span></div>
-        <div class="nav-item"><i class="fa fa-layer-group"></i><span>Библиотека</span></div>
+        <div class="nav-item active"><i class="fa-solid fa-house"></i><span>Главная</span></div>
+        <div class="nav-item"><i class="fa-solid fa-bolt"></i><span>Shorts</span></div>
+        <div class="nav-item" style="font-size:28px"><i class="fa-regular fa-circle-plus"></i></div>
+        <div class="nav-item"><i class="fa-solid fa-clapperboard"></i><span>Подписки</span></div>
+        <div class="nav-item"><i class="fa-solid fa-user-ninja"></i><span>Вы</span></div>
     </nav>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
+        tg.setHeaderColor('#0f0f0f');
 
+        // ТВОЙ АДРЕС ТУННЕЛЯ
         const API_URL = 'https://olive-zebras-shop.loca.lt';
 
-        async function load() {
+        async function loadVideos() {
+            const feed = document.getElementById('mainFeed');
             try {
-                const res = await fetch(`${API_URL}/get_videos`);
-                const data = await res.json();
-                const feed = document.getElementById('mainFeed');
+                const res = await fetch(`${API_URL}/get_videos`, {
+                    headers: { "Bypass-Tunnel-Reminder": "true" }
+                });
+                if (!res.ok) throw new Error('Сервер ответил с кодом ' + res.status);
                 
-                feed.innerHTML = data.map(v => `
+                const videos = await res.json();
+                if (videos.length === 0) {
+                    feed.innerHTML = '<div class="error-msg">Видео еще не загружены. Используй /upload в боте.</div>';
+                    return;
+                }
+
+                feed.innerHTML = videos.map(v => `
                     <div class="video-card">
-                        <div class="thumb" onclick="play(${v.id})">
-                            <i class="fa fa-play"></i>
+                        <div class="thumbnail" onclick="playVideo(${v.id})">
+                            <i class="fa-solid fa-play"></i>
+                            <div class="duration">4:20</div>
                         </div>
                         <div class="details">
                             <div class="avatar"></div>
                             <div class="meta">
                                 <span class="v-title">${v.title}</span>
-                                <span class="v-stats">${v.views} просмотров • только что</span>
+                                <span class="v-info">RuferTube • ${v.views} просмотров • сейчас</span>
                             </div>
                             <button class="sub-btn" onclick="subscribe(this)">Подписаться</button>
                         </div>
                         <div class="actions">
-                            <div class="action-item" onclick="like(${v.id})"><i class="fa-regular fa-thumbs-up"></i> ${v.likes}</div>
+                            <div class="action-item" onclick="likeVideo(${v.id}, this)">
+                                <i class="fa-regular fa-thumbs-up"></i> <span>${v.likes}</span>
+                            </div>
                             <div class="action-item"><i class="fa-regular fa-comment"></i> 0</div>
-                            <div class="action-item"><i class="fa-solid fa-share"></i></div>
+                            <div class="action-item"><i class="fa-solid fa-share-nodes"></i></div>
                         </div>
                     </div>
                 `).join('');
-            } catch (e) {
-                document.getElementById('mainFeed').innerHTML = '<p style="text-align:center">Ошибка сервера</p>';
+            } catch (err) {
+                feed.innerHTML = `<div class="error-msg">Ошибка связи с сервером <code>${err.message}</code></div>`;
             }
         }
 
-        async function play(id) {
-            // Отправляем запрос на инкремент просмотра
-            await fetch(`${API_URL}/view/${id}`);
+        async function playVideo(id) {
+            tg.HapticFeedback.impactOccurred('medium');
+            await fetch(`${API_URL}/view/${id}`, { headers: { "Bypass-Tunnel-Reminder": "true" } });
             tg.sendData("play_" + id);
             tg.close();
+        }
+
+        async function likeVideo(id, el) {
+            tg.HapticFeedback.impactOccurred('light');
+            try {
+                await fetch(`${API_URL}/like/${id}`, { headers: { "Bypass-Tunnel-Reminder": "true" } });
+                let span = el.querySelector('span');
+                span.innerText = parseInt(span.innerText) + 1;
+                el.querySelector('i').className = "fa-solid fa-thumbs-up";
+                el.querySelector('i').style.color = "var(--yt-red)";
+            } catch (e) {}
         }
 
         function subscribe(btn) {
             tg.HapticFeedback.notificationOccurred('success');
             btn.innerText = "Вы подписаны";
             btn.style.background = "#333";
-            btn.style.color = "white";
+            btn.style.color = "#fff";
         }
 
-        async function like(id, element) {
-            tg.HapticFeedback.impactOccurred('medium');
-            try {
-                await fetch(`${API_URL}/like/${id}`);
-                // Обновляем текст лайков на странице без перезагрузки
-                let countIcon = element.querySelector('span') || element;
-                let currentLikes = parseInt(element.innerText.replace(/\D/g, "")) || 0;
-                element.innerHTML = `<i class="fa-solid fa-thumbs-up" style="color:red"></i> ${currentLikes + 1}`;
-            } catch (e) {
-                console.error("Не удалось поставить лайк");
-            }
-        }
-
-        load();
+        loadVideos();
     </script>
 </body>
-
 </html>
