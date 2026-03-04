@@ -118,12 +118,21 @@
             btn.style.color = "white";
         }
 
-        function like(id) {
-            tg.HapticFeedback.impactOccurred('light');
-            // Здесь можно добавить fetch на сервер для лайка
+        async function like(id, element) {
+            tg.HapticFeedback.impactOccurred('medium');
+            try {
+                await fetch(`${API_URL}/like/${id}`);
+                // Обновляем текст лайков на странице без перезагрузки
+                let countIcon = element.querySelector('span') || element;
+                let currentLikes = parseInt(element.innerText.replace(/\D/g, "")) || 0;
+                element.innerHTML = `<i class="fa-solid fa-thumbs-up" style="color:red"></i> ${currentLikes + 1}`;
+            } catch (e) {
+                console.error("Не удалось поставить лайк");
+            }
         }
 
         load();
     </script>
 </body>
+
 </html>
