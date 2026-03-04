@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>RuferTube Premium</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --yt-red: #ff0000; --bg: #0f0f0f; --text: #fff; --grey: #aaa; }
+        body { background: var(--bg); color: var(--text); font-family: Roboto, Arial; margin: 0; padding-bottom: 70px; }
+        
+        header { position: sticky; top: 0; background: var(--bg); display: flex; justify-content: space-between; padding: 10px 15px; align-items: center; z-index: 10; }
+        .logo { display: flex; align-items: center; gap: 5px; font-weight: bold; font-size: 19px; }
+        
+        .video-card { margin-bottom: 20px; }
+        .thumb { width: 100%; aspect-ratio: 16/9; background: #222; position: relative; display: flex; align-items: center; justify-content: center; }
+        .thumb i { font-size: 40px; color: rgba(255,255,255,0.1); }
+
+        .details { display: flex; padding: 12px; gap: 12px; position: relative; }
+        .avatar { width: 36px; height: 36px; background: #444; border-radius: 50%; }
+        .meta { flex: 1; }
+        .v-title { font-size: 15px; font-weight: 500; margin-bottom: 4px; display: block; }
+        .v-stats { font-size: 12px; color: var(--grey); }
+
+        /* Кнопка подписки */
+        .sub-btn {
+            background: white;
+            color: black;
+            border-radius: 18px;
+            padding: 6px 15px;
+            font-size: 12px;
+            font-weight: bold;
+            border: none;
+            height: fit-content;
+        }
+
+        /* Лайки и управление */
+        .actions {
+            display: flex;
+            gap: 15px;
+            padding: 0 12px 10px 60px;
+            font-size: 13px;
+            color: var(--grey);
+        }
+        .action-item { display: flex; align-items: center; gap: 5px; }
+        .action-item i:active { color: var(--yt-red); transform: scale(1.2); transition: 0.1s; }
+
+        nav { position: fixed; bottom: 0; width: 100%; background: var(--bg); display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #222; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--grey); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo"><i class="fa-brands fa-youtube" style="color:red"></i> RuferTube</div>
+        <div style="display:flex; gap:15px"><i class="fa fa-search"></i><i class="fa fa-user-circle"></i></div>
+    </header>
+
+    <div id="mainFeed"></div>
+
+    <nav>
+        <div class="nav-item"><i class="fa fa-house"></i><span>Главная</span></div>
+        <div class="nav-item"><i class="fa fa-bolt"></i><span>Shorts</span></div>
+        <div class="nav-item" style="font-size:24px"><i class="fa-regular fa-circle-plus"></i></div>
+        <div class="nav-item"><i class="fa fa-clapperboard"></i><span>Подписки</span></div>
+        <div class="nav-item"><i class="fa fa-layer-group"></i><span>Библиотека</span></div>
+    </nav>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        const API_URL = 'https://olive-zebras-shop.loca.lt';
+
+        async function load() {
+            try {
+                const res = await fetch(`${API_URL}/get_videos`);
+                const data = await res.json();
+                const feed = document.getElementById('mainFeed');
+                
+                feed.innerHTML = data.map(v => `
+                    <div class="video-card">
+                        <div class="thumb" onclick="play(${v.id})">
+                            <i class="fa fa-play"></i>
+                        </div>
+                        <div class="details">
+                            <div class="avatar"></div>
+                            <div class="meta">
+                                <span class="v-title">${v.title}</span>
+                                <span class="v-stats">${v.views} просмотров • только что</span>
+                            </div>
+                            <button class="sub-btn" onclick="subscribe(this)">Подписаться</button>
+                        </div>
+                        <div class="actions">
+                            <div class="action-item" onclick="like(${v.id})"><i class="fa-regular fa-thumbs-up"></i> ${v.likes}</div>
+                            <div class="action-item"><i class="fa-regular fa-comment"></i> 0</div>
+                            <div class="action-item"><i class="fa-solid fa-share"></i></div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                document.getElementById('mainFeed').innerHTML = '<p style="text-align:center">Ошибка сервера</p>';
+            }
+        }
+
+        async function play(id) {
+            // Отправляем запрос на инкремент просмотра
+            await fetch(`${API_URL}/view/${id}`);
+            tg.sendData("play_" + id);
+            tg.close();
+        }
+
+        function subscribe(btn) {
+            tg.HapticFeedback.notificationOccurred('success');
+            btn.innerText = "Вы подписаны";
+            btn.style.background = "#333";
+            btn.style.color = "white";
+        }
+
+        function like(id) {
+            tg.HapticFeedback.impactOccurred('light');
+            // Здесь можно добавить fetch на сервер для лайка
+        }
+
+        load();
+    </script>
+</body>
+</html>
